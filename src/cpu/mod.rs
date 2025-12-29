@@ -6,35 +6,36 @@ use registers::{Registers, StatusFlags};
 
 pub struct Cpu {
     reg: Registers,
-    mem: Vec<u8>, // FIXME: probably must be fixed with the bus once done
+    mem: [u8; u16::MAX as usize],
     is_running: bool,
 
-    opcode_table: [Option<&'static Instruction>; 256],
+    opcode_table: [Option<&'static Instruction>; u8::MAX as usize],
 }
 
 impl Cpu {
+    const PRG_ROM_START: usize = 0x8000;
+
     pub fn new() -> Self {
         let reg = Registers::init();
         let opcode_table = Self::build_opcode_table();
         Cpu {
             reg,
-            mem: Vec::new(),
+            mem: [0; u16::MAX as usize],
             is_running: false,
             opcode_table,
         }
     }
 
     pub fn load(&mut self, prg: Vec<u8>) {
-        self.mem = prg;
+        // TODO: Must check that prg.len() is less or equal than 0xFFFF - 0x8000 (PRG-ROM length in
+        // the memory map), but what to do then ?
+        self.mem[Self::PRG_ROM_START..Self::PRG_ROM_START + prg.len()].copy_from_slice(&prg);
     }
 
     pub fn run(&mut self) {
-        self.reg.pc = 0; // FIXME: this line must be removed once the prg is loaded at tthe right
-                         // location in memory
-
         self.is_running = true;
         while self.is_running {
-            let op = self.mem[self.reg.pc as usize];
+            let op = self.mem_read(self.reg.pc);
 
             let cycles_used = match self.opcode_table[op as usize] {
                 Some(inst) => self.execute_instruction(inst),
@@ -44,6 +45,14 @@ impl Cpu {
                 ),
             };
         }
+    }
+
+    fn mem_read(&self, addr: u16) -> u8 {
+        self.mem[addr as usize]
+    }
+
+    fn mem_write(&mut self, addr: u16, data: u8) {
+        self.mem[addr as usize] = data;
     }
 
     fn set_zero(&mut self, value: u8) {
@@ -75,6 +84,26 @@ mod test {
         cpu.run();
         assert_eq!(cpu.reg.acc, 0x06);
         assert_eq!(cpu.reg.status, StatusFlags::UNUSED);
+    }
+
+    #[test]
+    fn test_zeropage_lda() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x00fa, 0x06);
+        let prg: Vec<u8> = vec![0xa5, 0xfa, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0x06);
+    }
+
+    #[test]
+    fn test_absolute_lda() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x00f1, 0x06);
+        let prg: Vec<u8> = vec![0xad, 0xf1, 0x00, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0x06);
     }
 
     #[test]
