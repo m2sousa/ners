@@ -1,21 +1,26 @@
 mod instructions;
 mod registers;
 
+use instructions::Instruction;
 use registers::{Registers, StatusFlags};
 
 pub struct Cpu {
     reg: Registers,
     mem: Vec<u8>, // FIXME: probably must be fixed with the bus once done
     is_running: bool,
+
+    opcode_table: [Option<&'static Instruction>; 256],
 }
 
 impl Cpu {
     pub fn new() -> Self {
         let reg = Registers::init();
+        let opcode_table = Self::build_opcode_table();
         Cpu {
             reg,
             mem: Vec::new(),
             is_running: false,
+            opcode_table,
         }
     }
 
@@ -30,10 +35,14 @@ impl Cpu {
         self.is_running = true;
         while self.is_running {
             let op = self.mem[self.reg.pc as usize];
-            self.reg.pc += 1;
 
-            let instruction = Cpu::get_instruction_from_opcode(op);
-            instruction.exec(self);
+            let cycles_used = match self.opcode_table[op as usize] {
+                Some(inst) => self.execute_instruction(inst),
+                None => todo!(
+                    "instruction (opcode={}) not found, error handling must be implemented",
+                    op
+                ),
+            };
         }
     }
 
@@ -119,12 +128,33 @@ mod test {
     }
 
     #[test]
-    // TODO: Need to check zero flag and negative flag for INX, how to ?
     fn test_inx() {
         let mut cpu = Cpu::new();
         let prg: Vec<u8> = vec![0xe8, 0x00];
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.x, 1);
+    }
+
+    #[test]
+    fn test_inx_overflow_and_zero() {
+        let mut cpu = Cpu::new();
+        cpu.reg.x = 0xff;
+        let prg: Vec<u8> = vec![0xe8, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.x, 0);
+        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::ZERO);
+    }
+
+    #[test]
+    fn test_inx_negative() {
+        let mut cpu = Cpu::new();
+        cpu.reg.x = 0b0111_1111;
+        let prg: Vec<u8> = vec![0xe8, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.x, 0b1000_0000);
+        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
     }
 }
