@@ -199,8 +199,8 @@ impl Cpu {
     ];
 
     /// Build a 256-entry lookup table for O(1) opcode lookup.
-    pub(super) fn build_opcode_table() -> [Option<&'static Instruction>; u8::MAX as usize] {
-        let mut opcode_table = [None; u8::MAX as usize];
+    pub(super) fn build_opcode_table() -> [Option<&'static Instruction>; u8::MAX as usize + 1] {
+        let mut opcode_table = [None; u8::MAX as usize + 1];
 
         for inst in Self::INSTRUCTION_SET {
             opcode_table[inst.opcode as usize] = Some(inst);

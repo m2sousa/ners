@@ -9,7 +9,7 @@ pub struct Cpu {
     mem: [u8; u16::MAX as usize],
     is_running: bool,
 
-    opcode_table: [Option<&'static Instruction>; u8::MAX as usize],
+    opcode_table: [Option<&'static Instruction>; u8::MAX as usize + 1],
 }
 
 impl Cpu {
@@ -91,6 +91,17 @@ mod test {
         let mut cpu = Cpu::new();
         cpu.mem_write(0x00fa, 0x06);
         let prg: Vec<u8> = vec![0xa5, 0xfa, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0x06);
+    }
+
+    #[test]
+    fn test_zeropage_x_lda() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x008f, 0x06);
+        cpu.reg.x = 0x0f;
+        let prg: Vec<u8> = vec![0xb5, 0x80, 0x00];
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0x06);
