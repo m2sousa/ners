@@ -55,6 +55,38 @@ impl Cpu {
         self.mem[addr as usize] = data;
     }
 
+    fn push_stack(&mut self, data: u8) {
+        // [0x0100 ... 0x01ff] is used for stack data.
+        const STACK_BASE: u16 = 0x0100;
+
+        let addr = STACK_BASE + self.reg.sp as u16;
+
+        self.mem_write(addr, data);
+
+        self.reg.sp -= 1;
+    }
+
+    fn pull_stack(&mut self) -> u8 {
+        // [0x0100 ... 0x01ff] is used for stack data.
+        const STACK_BASE: u16 = 0x0100;
+
+        let addr = STACK_BASE + self.reg.sp as u16;
+
+        self.reg.sp += 1;
+
+        self.mem_read(addr)
+    }
+
+    // TODO: Could I write a method that given a value and flags as StatusFlag::CARRY |
+    // StatusFlag::OVERFLOW and so on, do all the work in one go ?
+    fn set_carry(&mut self, value: u8) {
+        if value != 0 {
+            self.reg.set(StatusFlags::CARRY);
+        } else {
+            self.reg.unset(StatusFlags::CARRY);
+        }
+    }
+
     fn set_zero(&mut self, value: u8) {
         if value == 0 {
             self.reg.set(StatusFlags::ZERO);
@@ -196,5 +228,123 @@ mod test {
         cpu.run();
         assert_eq!(cpu.reg.x, 0b1000_0000);
         assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+    }
+
+    #[test]
+    fn test_immediate_and() {
+        let mut cpu = Cpu::new();
+        cpu.reg.acc = 0xff;
+        let prg: Vec<u8> = vec![0x29, 0x0e, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0xff & 0x0e);
+    }
+
+    #[test]
+    fn test_accumulator_asl() {
+        let mut cpu = Cpu::new();
+        cpu.reg.acc = 0b1000_0001;
+        let prg: Vec<u8> = vec![0x0a, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0b0000_0010);
+        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::CARRY);
+    }
+
+    #[test]
+    fn test_absolute_asl() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x0a0b, 0b0000_0001);
+        let prg: Vec<u8> = vec![0x0e, 0x0b, 0x0a, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.mem_read(0x0a0b), 0b0000_0010);
+        assert_eq!(cpu.reg.status, StatusFlags::UNUSED);
+    }
+
+    #[test]
+    fn test_zeropage_inc() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x00fa, 0x0a);
+        let prg: Vec<u8> = vec![0xe6, 0xfa, 00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.mem_read(0x00fa), 0x0a + 1);
+    }
+
+    #[test]
+    fn test_iny() {
+        let mut cpu = Cpu::new();
+        cpu.reg.y = 0xef;
+        let prg: Vec<u8> = vec![0xc8, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.y, 0xef + 1);
+    }
+
+    #[test]
+    fn test_zeropage_x_ora() {
+        let mut cpu = Cpu::new();
+        cpu.reg.acc = 0xef;
+        cpu.reg.x = 0x02;
+        cpu.mem_write(0x00bd, 0x78);
+        let prg: Vec<u8> = vec![0x15, 0xbd - 0x02, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0xef | 0x78);
+    }
+
+    #[test]
+    fn test_pha() {
+        let mut cpu = Cpu::new();
+        cpu.reg.acc = 0xb4;
+        let prg: Vec<u8> = vec![0x48, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.sp, 0xff - 1);
+        assert_eq!(cpu.mem_read(0x01ff), 0xb4);
+    }
+
+    #[test]
+    fn test_absolute_jmp() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0xf000 + 1, 0x00);
+        let prg: Vec<u8> = vec![0x4c, 0x00, 0xf0, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.pc, 0xf000 + 1);
+    }
+
+    #[test]
+    fn test_absolute_x_dec() {
+        let mut cpu = Cpu::new();
+        cpu.reg.x = 0x02;
+        cpu.mem_write(0x01ff + cpu.reg.x as u16, 0x01);
+        let prg: Vec<u8> = vec![0xde, 0xff, 0x01, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.mem_read(0x01ff + cpu.reg.x as u16), 0x00);
+    }
+
+    #[test]
+    fn test_dey() {
+        let mut cpu = Cpu::new();
+        cpu.reg.y = 0xf1;
+        let prg: Vec<u8> = vec![0x88, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.y, 0xf1 - 1);
+    }
+
+    #[test]
+    fn test_pla() {
+        let mut cpu = Cpu::new();
+        cpu.mem_write(0x01fe, 0x01);
+        cpu.reg.sp = 0xfe;
+        let prg: Vec<u8> = vec![0x68, 0x00];
+        cpu.load(prg);
+        cpu.run();
+        assert_eq!(cpu.reg.acc, 0x01);
+        assert_eq!(cpu.reg.sp, 0xfe + 1);
     }
 }
