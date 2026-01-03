@@ -173,7 +173,11 @@ impl Cpu {
     // Pulls an 8 bit value from the stack and into the processor flags.
     // The flags will take on new states as determined by the value pulled.
     pub(super) fn PLP(&mut self, _: AddressingMode) {
-        self.reg.status = self.pull_stack();
+        // Note that PLP does ignore the B flag.
+        self.reg.status = self.pull_stack() & !StatusFlags::B;
+
+        // Ensure that the unused flag is always set to one.
+        self.reg.status |= StatusFlags::UNUSED;
     }
 
     /// If the negative flag is set then add the relative displacement to the program counter to cause a branch to a new location.
