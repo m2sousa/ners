@@ -199,12 +199,17 @@ impl Cpu {
     /// The RTI instruction is used at the end of an interrupt processing routine.
     /// It pulls the processor flags from the stack followed by the program counter.
     pub(super) fn RTI(&mut self, _: AddressingMode) {
-        self.reg.status = self.pull_stack();
+        const RTI_LENGTH: u16 = 1;
+
+        self.reg.status = self.pull_stack() & !StatusFlags::B | StatusFlags::UNUSED;
 
         let lo = self.pull_stack() as u16;
         let hi = self.pull_stack() as u16;
 
-        self.reg.pc = (hi << 8) | lo;
+        // Note that RTI pulls the exact address from the stack, however, due to the genericity of
+        // Cpu::execute_instruction, the program counter is incremented by RTI_LENGTH. We, thus,
+        // compensate here.
+        self.reg.pc = ((hi << 8) | lo) - RTI_LENGTH;
     }
 
     /// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory.
