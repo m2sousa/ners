@@ -528,7 +528,7 @@ impl Cpu {
 
     /// Subtracts one from the X register setting the zero and negative flags as appropriate.
     pub(super) fn DEX(&mut self, _: AddressingMode) {
-        self.reg.x -= 1;
+        self.reg.x = self.reg.x.wrapping_sub(1);
 
         self.set_zero(self.reg.x);
         self.set_negative(self.reg.x);
