@@ -74,7 +74,7 @@ impl Cpu {
 
     /// Pushes a copy of the status flags on to the stack.
     pub(super) fn PHP(&mut self, _: AddressingMode) {
-        self.push_stack(self.reg.status);
+        self.push_stack(self.reg.status | StatusFlags::B);
     }
 
     /// If the negative flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
