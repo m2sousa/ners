@@ -384,7 +384,7 @@ impl Cpu {
 
     /// Subtracts one from the Y register setting the zero and negative flags as appropriate.
     pub(super) fn DEY(&mut self, _: AddressingMode) {
-        self.reg.y -= 1;
+        self.reg.y = self.reg.y.wrapping_sub(1);
 
         self.set_zero(self.reg.y);
         self.set_negative(self.reg.y);
