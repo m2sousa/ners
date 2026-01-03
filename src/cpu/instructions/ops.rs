@@ -97,19 +97,19 @@ impl Cpu {
     pub(super) fn JSR(&mut self, mode: AddressingMode) {
         const JSR_LENGTH: u16 = 3;
 
-        let addr = self.reg.pc - 1;
+        let addr = self.reg.pc + 1;
 
         let lo = (addr & 0xff) as u8;
         let hi = (addr >> 8 & 0xff) as u8;
 
-        self.push_stack(lo);
         self.push_stack(hi);
+        self.push_stack(lo);
 
         let addr = self.get_operand_address(mode);
 
         // JSR_LENGTH must be substracted from the program counter due to the genericity (see,
         // CPU::execute_instruction) that **always** add the length of the instruction.
-        self.reg.pc = addr as u16 - JSR_LENGTH;
+        self.reg.pc = addr - JSR_LENGTH;
     }
 
     /// A logical AND is performed, bit by bit, on the accumulator contents using the contents of a byte of memory.
@@ -275,7 +275,7 @@ impl Cpu {
 
         let addr = (hi << 8) | lo;
 
-        self.reg.pc = addr;
+        self.reg.pc = addr + 1;
     }
 
     /// This instruction adds the contents of a memory location to the accumulator together with the carry bit.
