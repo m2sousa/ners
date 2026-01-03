@@ -97,7 +97,7 @@ impl Cpu {
     pub(super) fn JSR(&mut self, mode: AddressingMode) {
         const JSR_LENGTH: u16 = 3;
 
-        let addr = self.reg.pc + 1;
+        let addr = self.reg.pc + (JSR_LENGTH - 1);
 
         let lo = (addr & 0xff) as u8;
         let hi = (addr >> 8 & 0xff) as u8;
@@ -279,7 +279,7 @@ impl Cpu {
 
         let addr = (hi << 8) | lo;
 
-        self.reg.pc = addr + 1;
+        self.reg.pc = addr;
     }
 
     /// This instruction adds the contents of a memory location to the accumulator together with the carry bit.
