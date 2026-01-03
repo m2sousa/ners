@@ -288,10 +288,11 @@ impl Cpu {
         let operand = self.get_instruction_operand(mode);
         let mut flag_carry = false;
 
-        let (mut result, operand_carry) = self.reg.acc.overflowing_sub(operand);
+        let (mut result, operand_carry) = self.reg.acc.overflowing_add(operand);
 
-        if self.reg.status & StatusFlags::CARRY == 0 {
-            (result, flag_carry) = result.overflowing_sub(1);
+        if self.reg.status & StatusFlags::CARRY != 0 {
+            (result, flag_carry) = result.overflowing_add(1);
+            self.reg.unset(StatusFlags::CARRY);
         }
 
         if operand_carry || flag_carry {
@@ -300,7 +301,11 @@ impl Cpu {
             self.reg.unset(StatusFlags::CARRY);
         }
 
-        // FIXME: How do I take into account the overflow there ?
+        if (result ^ self.reg.acc) & (result ^ operand) & 0b1000_0000 != 0 {
+            self.reg.set(StatusFlags::OVERFLOW);
+        } else {
+            self.reg.unset(StatusFlags::OVERFLOW);
+        }
 
         self.reg.acc = result;
         self.set_zero(result);
