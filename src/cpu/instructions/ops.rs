@@ -105,11 +105,11 @@ impl Cpu {
         self.push_stack(lo);
         self.push_stack(hi);
 
-        let operand = self.get_instruction_operand(mode);
+        let addr = self.get_operand_address(mode);
 
         // JSR_LENGTH must be substracted from the program counter due to the genericity (see,
         // CPU::execute_instruction) that **always** add the length of the instruction.
-        self.reg.pc = operand as u16 - JSR_LENGTH;
+        self.reg.pc = addr as u16 - JSR_LENGTH;
     }
 
     /// A logical AND is performed, bit by bit, on the accumulator contents using the contents of a byte of memory.
