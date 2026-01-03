@@ -109,13 +109,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_immediate_basic_lda() {
+    fn test_immediate_lda() {
         let mut cpu = Cpu::new();
         let prg: Vec<u8> = vec![0xa9, 0x06, 0x00];
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0x06);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE | StatusFlags::B
+        );
     }
 
     #[test]
@@ -156,7 +159,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0x00);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::ZERO);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::ZERO
+        );
     }
 
     #[test]
@@ -166,7 +175,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0xff);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::NEGATIVE
+        );
     }
 
     #[test]
@@ -176,7 +191,10 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, cpu.reg.x);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE | StatusFlags::B
+        );
     }
 
     #[test]
@@ -186,7 +204,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, cpu.reg.x);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::NEGATIVE
+        );
     }
 
     #[test]
@@ -196,7 +220,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, cpu.reg.x);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::ZERO);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::ZERO
+        );
     }
 
     #[test]
@@ -216,7 +246,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.x, 0);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::ZERO);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::ZERO
+        );
     }
 
     #[test]
@@ -227,7 +263,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.x, 0b1000_0000);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::NEGATIVE
+        );
     }
 
     #[test]
@@ -248,7 +290,13 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0b0000_0010);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED | StatusFlags::CARRY);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED
+                | StatusFlags::INTERRUPT_DISABLE
+                | StatusFlags::B
+                | StatusFlags::CARRY
+        );
     }
 
     #[test]
@@ -259,7 +307,10 @@ mod test {
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.mem_read(0x0a0b), 0b0000_0010);
-        assert_eq!(cpu.reg.status, StatusFlags::UNUSED);
+        assert_eq!(
+            cpu.reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE | StatusFlags::B
+        );
     }
 
     #[test]
@@ -301,8 +352,8 @@ mod test {
         let prg: Vec<u8> = vec![0x48, 0x00];
         cpu.load(prg);
         cpu.run();
-        assert_eq!(cpu.reg.sp, 0xff - 1);
-        assert_eq!(cpu.mem_read(0x01ff), 0xb4);
+        assert_eq!(cpu.reg.sp, 0xfd - 1);
+        assert_eq!(cpu.mem_read(0x01fd), 0xb4);
     }
 
     #[test]

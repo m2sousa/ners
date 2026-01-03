@@ -34,8 +34,7 @@ impl Registers {
             // Why does the stack pointer starts at 0xfd rather than 0xff tho ?
             sp: 0xfd,
             // Status bit at 0x20 (fifth bit) is always set to 1.
-            // FIXME: It seems that the I flag (0x04) is set to 1 as well ?
-            status: StatusFlags::UNUSED,
+            status: StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE,
             ..Default::default()
         }
     }
@@ -65,15 +64,24 @@ mod test {
     fn test_set_flags() {
         let mut reg = Registers::init();
         reg.set(StatusFlags::NEGATIVE);
-        assert_eq!(reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+        assert_eq!(
+            reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE | StatusFlags::NEGATIVE
+        );
     }
 
     #[test]
     fn test_unset_flags() {
         let mut reg = Registers::init();
         reg.set(StatusFlags::NEGATIVE);
-        assert_eq!(reg.status, StatusFlags::UNUSED | StatusFlags::NEGATIVE);
+        assert_eq!(
+            reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE | StatusFlags::NEGATIVE
+        );
         reg.unset(StatusFlags::NEGATIVE);
-        assert_eq!(reg.status, StatusFlags::UNUSED);
+        assert_eq!(
+            reg.status,
+            StatusFlags::UNUSED | StatusFlags::INTERRUPT_DISABLE
+        );
     }
 }
