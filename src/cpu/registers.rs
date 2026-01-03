@@ -28,13 +28,24 @@ impl Registers {
     pub fn init() -> Self {
         Registers {
             // Program ROM -- PRG ROM [0x8000 ... 0xFFFF]
+            // FIXME: program_counter must be read from 0xfffc as well ?
             pc: 0x8000,
             // Memory space [0x0100 ... 0x01FF] is used for stack. Stack grows from top to bottom.
-            sp: 0xFF,
+            // Why does the stack pointer starts at 0xfd rather than 0xff tho ?
+            sp: 0xfd,
             // Status bit at 0x20 (fifth bit) is always set to 1.
-            status: 0x20,
+            // FIXME: It seems that the I flag (0x04) is set to 1 as well ?
+            status: StatusFlags::UNUSED,
             ..Default::default()
         }
+    }
+
+    /// Reset the registers to their initial value. Note that the program_counter must be read
+    /// behorehand from 0xfffc in memory and thus passed to this method.
+    pub fn reset(&mut self, pc: u16) {
+        self.pc = pc;
+        self.sp = self.sp.wrapping_sub(3);
+        self.set(StatusFlags::INTERRUPT_DISABLE);
     }
 
     pub fn set(&mut self, flag: FlagPosition) {
