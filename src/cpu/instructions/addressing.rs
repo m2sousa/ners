@@ -70,7 +70,7 @@ impl Cpu {
                 let paddr = lo.wrapping_add(self.reg.x) as u16;
 
                 let lo = self.mem_read(paddr) as u16;
-                let hi = self.mem_read(paddr + 1) as u16;
+                let hi = self.mem_read((paddr + 1) & 0xFF) as u16;
 
                 (hi << 8) | lo
             }
@@ -94,6 +94,7 @@ impl Cpu {
         }
 
         let addr = self.get_operand_address(mode);
+
         self.mem_read(addr)
     }
 }
