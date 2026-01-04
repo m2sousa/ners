@@ -78,7 +78,7 @@ impl Cpu {
                 let paddr = self.mem_read(self.reg.pc + 1) as u16;
 
                 let lo = self.mem_read(paddr) as u16;
-                let hi = self.mem_read(paddr + 1) as u16;
+                let hi = self.mem_read((paddr + 1) & 0xFF) as u16;
 
                 ((hi << 8) | lo).wrapping_add(self.reg.y as u16)
             }
