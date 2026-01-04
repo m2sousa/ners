@@ -515,7 +515,7 @@ impl Cpu {
     pub(super) fn DEC(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
 
-        let data = self.mem_read(addr) - 1;
+        let data = self.mem_read(addr).wrapping_sub(1);
 
         self.mem_write(addr, data);
 
@@ -606,7 +606,7 @@ impl Cpu {
     pub(super) fn INC(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
 
-        let data = self.mem_read(addr) + 1;
+        let data = self.mem_read(addr).wrapping_add(1);
 
         self.mem_write(addr, data);
 
