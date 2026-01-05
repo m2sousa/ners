@@ -1,6 +1,8 @@
 use super::Cpu;
 
-#[derive(Clone, Copy, Debug)]
+/// Various addressing modes available for the 6502 cpu, determining how the processor must
+/// interprets instructions operand.
+#[derive(Clone, Copy)]
 pub(crate) enum AddressingMode {
     Implied,
     Accumulator,
@@ -18,6 +20,7 @@ pub(crate) enum AddressingMode {
 }
 
 impl Cpu {
+    /// Computes the effective memory address for an operand based on a given addressing mode.
     pub(super) fn get_operand_address(&self, mode: AddressingMode) -> u16 {
         match mode {
             // Note that the Relative addressing mode returns the same value as would the Immediate
@@ -82,12 +85,12 @@ impl Cpu {
 
                 ((hi << 8) | lo).wrapping_add(self.reg.y as u16)
             }
-            _ => unimplemented!("Method `get_operand_address` not implemented for {mode:?}.",),
+            _ => unreachable!(),
         }
     }
 
     /// Due to a cpu bug, a peculiar handling must be done for the JMP instruction with the
-    /// addressing mode being indirect. The cpu failing to increment the page when addresses end
+    /// addressing mode being indirect. The cpu fails to increment the page when addresses end
     /// with 0xff, thus, only lsb must be incremented in this case.
     pub(super) fn get_jmp_operand_address(&self, mode: AddressingMode) -> u16 {
         if !matches!(mode, AddressingMode::Indirect) {
@@ -103,6 +106,7 @@ impl Cpu {
         (hi << 8) | lo
     }
 
+    /// Retrieves the operand value for an instruction based on the given addressing mode.
     pub(super) fn get_instruction_operand(&self, mode: AddressingMode) -> u8 {
         // Some instructions have an option to operate directly upon the accumulator.
         // This early return permit a smooth use of those instructions.
