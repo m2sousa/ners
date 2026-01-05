@@ -70,7 +70,7 @@ impl Cpu {
                 let paddr = lo.wrapping_add(self.reg.x) as u16;
 
                 let lo = self.mem_read(paddr) as u16;
-                let hi = self.mem_read((paddr + 1) & 0xFF) as u16;
+                let hi = self.mem_read((paddr + 1) & 0xff) as u16;
 
                 (hi << 8) | lo
             }
@@ -78,7 +78,7 @@ impl Cpu {
                 let paddr = self.mem_read(self.reg.pc + 1) as u16;
 
                 let lo = self.mem_read(paddr) as u16;
-                let hi = self.mem_read((paddr + 1) & 0xFF) as u16;
+                let hi = self.mem_read((paddr + 1) & 0xff) as u16;
 
                 ((hi << 8) | lo).wrapping_add(self.reg.y as u16)
             }
@@ -86,9 +86,26 @@ impl Cpu {
         }
     }
 
+    /// Due to a cpu bug, a peculiar handling must be done for the JMP instruction with the
+    /// addressing mode being indirect. The cpu failing to increment the page when addresses end
+    /// with 0xff, thus, only lsb must be incremented in this case.
+    pub(super) fn get_jmp_operand_address(&self, mode: AddressingMode) -> u16 {
+        if !matches!(mode, AddressingMode::Indirect) {
+            return self.get_operand_address(mode);
+        }
+
+        let plo = self.mem_read(self.reg.pc + 1) as u16;
+        let phi = self.mem_read(self.reg.pc + 2) as u16;
+
+        let lo = self.mem_read((phi << 8) | plo) as u16;
+        let hi = self.mem_read((phi << 8) | (plo.wrapping_add(1) & 0xff)) as u16;
+
+        (hi << 8) | lo
+    }
+
     pub(super) fn get_instruction_operand(&self, mode: AddressingMode) -> u8 {
         // Some instructions have an option to operate directly upon the accumulator.
-        // This early returns permit a smooth use of those instructions.
+        // This early return permit a smooth use of those instructions.
         if matches!(mode, AddressingMode::Accumulator) {
             return self.reg.acc;
         }

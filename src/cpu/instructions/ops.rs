@@ -253,7 +253,8 @@ impl Cpu {
     pub(super) fn JMP(&mut self, mode: AddressingMode) {
         const JMP_LENGTH: u16 = 3;
 
-        let addr = self.get_operand_address(mode);
+        // Note that JMP do not must the same method as other instructions due to a cpu bug.
+        let addr = self.get_jmp_operand_address(mode);
 
         // JMP_LENGTH must be substracted from the program counter due to the genericity (see,
         // CPU::execute_instruction) that **always** add the length of the instruction.

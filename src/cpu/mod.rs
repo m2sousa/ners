@@ -6,7 +6,7 @@ use registers::{Registers, StatusFlags};
 
 pub struct Cpu {
     reg: Registers,
-    mem: [u8; u16::MAX as usize],
+    mem: [u8; u16::MAX as usize + 1],
     is_running: bool,
 
     opcode_table: [Option<&'static Instruction>; u8::MAX as usize + 1],
@@ -20,7 +20,7 @@ impl Cpu {
         let opcode_table = Self::build_opcode_table();
         Cpu {
             reg,
-            mem: [0; u16::MAX as usize],
+            mem: [0; u16::MAX as usize + 1],
             is_running: false,
             opcode_table,
         }
@@ -70,9 +70,9 @@ impl Cpu {
         // [0x0100 ... 0x01ff] is used for stack data.
         const STACK_BASE: u16 = 0x0100;
 
-        let addr = STACK_BASE + self.reg.sp as u16;
-
         self.reg.sp += 1;
+
+        let addr = STACK_BASE + self.reg.sp as u16;
 
         self.mem_read(addr)
     }
@@ -391,11 +391,11 @@ mod test {
     fn test_pla() {
         let mut cpu = Cpu::new();
         cpu.mem_write(0x01fe, 0x01);
-        cpu.reg.sp = 0xfe;
+        cpu.reg.sp = 0xfd;
         let prg: Vec<u8> = vec![0x68, 0x00];
         cpu.load(prg);
         cpu.run();
         assert_eq!(cpu.reg.acc, 0x01);
-        assert_eq!(cpu.reg.sp, 0xfe + 1);
+        assert_eq!(cpu.reg.sp, 0xfd + 1);
     }
 }
