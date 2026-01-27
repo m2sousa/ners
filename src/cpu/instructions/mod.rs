@@ -1,13 +1,13 @@
 mod addressing;
 mod ops;
 
-use super::Cpu;
+use super::{Bus, Cpu};
 use addressing::AddressingMode;
 
 pub(crate) struct Instruction {
     pub opcode: u8,
     pub mnemonic: &'static str,
-    pub execute: fn(&mut Cpu, AddressingMode) -> (),
+    pub execute: fn(&mut Cpu, &mut Bus, AddressingMode) -> (),
     pub mode: AddressingMode,
     pub length: u8,
     pub cycles: Cycles,
@@ -22,7 +22,7 @@ impl Instruction {
     const fn new(
         opcode: u8,
         mnemonic: &'static str,
-        execute: fn(&mut Cpu, AddressingMode) -> (),
+        execute: fn(&mut Cpu, &mut Bus, AddressingMode) -> (),
         mode: AddressingMode,
         length: u8,
         cycles: u8,
@@ -211,8 +211,8 @@ impl Cpu {
 
     /// Execute an instruction.
     /// Returns the number of cycles used by the instruction.
-    pub(super) fn execute_instruction(&mut self, inst: &Instruction) -> u8 {
-        (inst.execute)(self, inst.mode);
+    pub(super) fn execute_instruction(&mut self, bus: &mut Bus, inst: &Instruction) -> u8 {
+        (inst.execute)(self, bus, inst.mode);
 
         let mut cycles = inst.cycles.base;
 
