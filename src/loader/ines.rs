@@ -25,15 +25,17 @@ impl Loader for INesLoader {
         let prg_size = 16384
             * *buf
                 .get(Self::PRG_SIZE_OFFSET)
-                .ok_or(LoaderError::ReadFailed)? as usize;
+                .ok_or(LoaderError::IncorrectHeader)? as usize;
 
         // CHR ROM size is encoded in 8KB units.
         let chr_size = 8192
             * *buf
                 .get(Self::CHR_SIZE_OFFSET)
-                .ok_or(LoaderError::ReadFailed)? as usize;
+                .ok_or(LoaderError::IncorrectHeader)? as usize;
 
-        let flag6 = *buf.get(Self::FLAG6_OFFSET).ok_or(LoaderError::ReadFailed)?;
+        let flag6 = *buf
+            .get(Self::FLAG6_OFFSET)
+            .ok_or(LoaderError::IncorrectHeader)?;
 
         let is_trainer_present = (flag6 & Flag6Masks::TRAINER) != 0;
 

@@ -28,12 +28,21 @@ pub enum RomLoader {
 
 impl RomLoader {
     pub fn load(path: &Path) -> Result<Self, LoaderError> {
-        let file_buf = std::fs::read(path).map_err(|_| LoaderError::ReadFailed)?;
+        let file_buf = std::fs::read(path).map_err(|_| LoaderError::OpenFailed)?;
 
         if INesLoader::check_file_signature(&file_buf) {
             INesLoader::load_from_buffer(file_buf).map(Self::INes)
         } else {
             Err(LoaderError::UnsupportedFormat)
         }
+    }
+
+    pub fn get_prg_rom(&self) -> Vec<u8> {
+        match self {
+            RomLoader::INes(loader) => loader,
+            _ => unreachable!(),
+        }
+        .get_prg_rom()
+        .to_vec()
     }
 }

@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum LoaderError {
-    ReadFailed,
+    OpenFailed,
+    IncorrectHeader,
     UnsupportedFormat,
 }

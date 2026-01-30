@@ -14,7 +14,7 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    const PRG_ROM_START: usize = 0x8000;
+    const RESET_VECTOR: u16 = 0xfffc;
 
     pub fn new() -> Self {
         let reg = Registers::init();
@@ -24,6 +24,16 @@ impl Cpu {
             is_running: false,
             opcode_table,
         }
+    }
+
+    // TODO: Some work must be done there in the reset methods, notably assigning the stack pointer
+    // and some flags...
+    pub fn reset(&mut self, bus: &Bus) {
+        let lo = self.mem_read(bus, Self::RESET_VECTOR) as u16;
+        let hi = self.mem_read(bus, Self::RESET_VECTOR + 1) as u16;
+
+        self.reg.pc = (hi << 8) | lo;
+        println!("[DBG] Program counter set to 0x{:4X}.", self.reg.pc);
     }
 
     pub fn run(&mut self, bus: &mut Bus) {

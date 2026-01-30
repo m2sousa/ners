@@ -39,14 +39,6 @@ impl Registers {
         }
     }
 
-    /// Reset the registers to their initial value. Note that the program_counter must be read
-    /// behorehand from 0xfffc in memory and thus passed to this method.
-    pub fn reset(&mut self, pc: u16) {
-        self.pc = pc;
-        self.sp = self.sp.wrapping_sub(3);
-        self.set(StatusFlags::INTERRUPT_DISABLE);
-    }
-
     pub fn set(&mut self, flag: FlagPosition) {
         self.status |= flag;
     }
