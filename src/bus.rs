@@ -25,7 +25,7 @@ impl Bus {
         }
     }
 
-    pub fn load_rom_data(&mut self, loader: RomLoader) {
+    pub fn load_prg_data(&mut self, loader: &RomLoader) {
         self.rom = loader.get_prg_rom();
         println!("[DBG] Loaded {} bytes of data in the rom.", self.rom.len());
     }

@@ -45,4 +45,13 @@ impl RomLoader {
         .get_prg_rom()
         .to_vec()
     }
+
+    pub fn get_chr_rom(&self) -> Vec<u8> {
+        match self {
+            RomLoader::INes(loader) => loader,
+            _ => unreachable!(),
+        }
+        .get_chr_rom()
+        .to_vec()
+    }
 }

@@ -59,7 +59,7 @@ impl Loader for INesLoader {
     }
 
     fn get_chr_rom(&self) -> &[u8] {
-        let chr_offset = self.prg_offset + self.prg_size + 1;
+        let chr_offset = self.prg_offset + self.prg_size;
         &self.data[chr_offset..chr_offset + self.chr_size]
     }
 }

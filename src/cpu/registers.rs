@@ -28,7 +28,6 @@ impl Registers {
     pub fn init() -> Self {
         Registers {
             // Program ROM -- PRG ROM [0x8000 ... 0xFFFF]
-            // FIXME: program_counter must be read from 0xfffc as well ?
             pc: 0x8000,
             // Memory space [0x0100 ... 0x01FF] is used for stack. Stack grows from top to bottom.
             // Why does the stack pointer starts at 0xfd rather than 0xff tho ?
