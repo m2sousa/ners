@@ -21,7 +21,7 @@ pub(crate) enum AddressingMode {
 
 impl Cpu {
     /// Computes the effective memory address for an operand based on a given addressing mode.
-    pub(super) fn get_operand_address(&self, bus: &Bus, mode: AddressingMode) -> u16 {
+    pub(super) fn get_operand_address(&self, bus: &mut Bus, mode: AddressingMode) -> u16 {
         match mode {
             // Note that the Relative addressing mode returns the same value as would the Immediate
             // one, this implies that instructions are responsible to the u8 to i8 conversion
@@ -92,7 +92,7 @@ impl Cpu {
     /// Due to a cpu bug, a peculiar handling must be done for the JMP instruction with the
     /// addressing mode being indirect. The cpu fails to increment the page when addresses end
     /// with 0xff, thus, only lsb must be incremented in this case.
-    pub(super) fn get_jmp_operand_address(&self, bus: &Bus, mode: AddressingMode) -> u16 {
+    pub(super) fn get_jmp_operand_address(&self, bus: &mut Bus, mode: AddressingMode) -> u16 {
         if !matches!(mode, AddressingMode::Indirect) {
             return self.get_operand_address(bus, mode);
         }
@@ -107,7 +107,7 @@ impl Cpu {
     }
 
     /// Retrieves the operand value for an instruction based on the given addressing mode.
-    pub(super) fn get_instruction_operand(&self, bus: &Bus, mode: AddressingMode) -> u8 {
+    pub(super) fn get_instruction_operand(&self, bus: &mut Bus, mode: AddressingMode) -> u8 {
         // Some instructions have an option to operate directly upon the accumulator.
         // This early return permit a smooth use of those instructions.
         if matches!(mode, AddressingMode::Accumulator) {

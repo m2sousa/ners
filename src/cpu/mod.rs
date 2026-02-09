@@ -28,7 +28,7 @@ impl Cpu {
 
     // TODO: Some work must be done there in the reset methods, notably assigning the stack pointer
     // and some flags...
-    pub fn reset(&mut self, bus: &Bus) {
+    pub fn reset(&mut self, bus: &mut Bus) {
         let lo = self.mem_read(bus, Self::RESET_VECTOR) as u16;
         let hi = self.mem_read(bus, Self::RESET_VECTOR + 1) as u16;
 
@@ -51,7 +51,7 @@ impl Cpu {
         }
     }
 
-    fn mem_read(&self, bus: &Bus, addr: u16) -> u8 {
+    fn mem_read(&self, bus: &mut Bus, addr: u16) -> u8 {
         bus.read(addr)
     }
 
@@ -70,7 +70,7 @@ impl Cpu {
         self.reg.sp -= 1;
     }
 
-    fn pull_stack(&mut self, bus: &Bus) -> u8 {
+    fn pull_stack(&mut self, bus: &mut Bus) -> u8 {
         // [0x0100 ... 0x01ff] is used for stack data.
         const STACK_BASE: u16 = 0x0100;
 
