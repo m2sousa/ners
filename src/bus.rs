@@ -30,7 +30,7 @@ impl Bus {
     pub fn load_prg_data(&mut self, loader: &RomLoader) {
         // FIXME: This should not be here, must I write some method insert_cartridge at the bus
         // level as well ? Or consume the loader in the bus ?
-        self.ppu.load_chr_data(&loader);
+        self.ppu.load_chr_data(loader);
 
         self.rom = loader.get_prg_rom();
         println!("[DBG] Loaded {} bytes of data in the rom.", self.rom.len());
@@ -58,7 +58,12 @@ impl Bus {
             Self::ROM_START..=Self::ROM_END => {
                 panic!("[ERR] Trying to write on the ROM at address 0x{:04X}", addr)
             }
-            _ => unimplemented!("cannot write memory space at 0x{:4X}", addr),
+            _ => {
+                println!(
+                    "[DBG] Trying to write at 0x{:4x}. Not implemented, dropping the value.",
+                    addr
+                );
+            }
         }
     }
 

@@ -125,8 +125,9 @@ impl Ppu {
                 // There is no dummy reads when reading the palette data.
                 let mut addr = (self.addr - Self::PALETTE_ADDR_START) as usize;
                 addr %= Self::PALETTES_SIZE;
+                self.data_buffer = self.palettes[addr];
 
-                self.palettes[addr]
+                self.data_buffer
             }
             _ => unimplemented!(
                 "[ERR] Invalid PPU memory access to read : 0x{:4x}",
@@ -139,6 +140,27 @@ impl Ppu {
     }
 
     fn mem_write(&mut self, data: u8) {
+        match self.addr {
+            Self::PATTERNS_ADDR_START..=Self::PATTERNS_ADDR_END => {
+                // FIXME: Should it write in the pattern table in the case of CHR-RAM ?
+                panic!("FIXME: write to pattern tables ?");
+            }
+            Self::RAM_ADDR_START..=Self::RAM_ADDR_END => {
+                let mut addr = (self.addr - Self::RAM_ADDR_START) as usize;
+                // TODO: mirroring with cartridge information must be done here...
+                addr %= Self::PPU_RAM_SIZE;
+                self.vram[addr] = data;
+            }
+            Self::PALETTE_ADDR_START..=Self::PALETTE_ADDR_END => {
+                let addr = (self.addr - Self::PALETTE_ADDR_START) as usize;
+                self.palettes[addr] = data;
+            }
+            _ => unimplemented!(
+                "[ERR] Invalid PPU memory access to write : 0x{:4x}",
+                self.addr
+            ),
+        }
+
         self.addr += self.reg.get_addr_increment();
     }
 }
