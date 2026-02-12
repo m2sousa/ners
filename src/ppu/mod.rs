@@ -1,7 +1,10 @@
 mod mmio;
 mod oam;
+mod pattern;
 
 use crate::loader::RomLoader;
+
+use pattern::PatternTables;
 
 pub struct Ppu {
     reg: mmio::Registers,
@@ -13,7 +16,7 @@ pub struct Ppu {
     palettes: [u8; Ppu::PALETTES_SIZE],
     object_attribute_mem: [u8; Ppu::OAM_MEM_SIZE],
 
-    pattern_table: Option<Vec<u8>>,
+    pattern_table: Option<PatternTables>,
 
     data_buffer: u8,
     addr: u16,
@@ -60,10 +63,11 @@ impl Ppu {
     }
 
     pub fn load_chr_data(&mut self, loader: &RomLoader) {
-        self.pattern_table = Some(loader.get_chr_rom());
+        let data = &loader.get_chr_rom();
+        self.pattern_table = Some(PatternTables::new(data));
         println!(
             "[DBG] Loaded {} bytes of data in the pattern table.",
-            self.pattern_table.as_ref().unwrap().len()
+            data.len()
         );
     }
 
@@ -109,7 +113,11 @@ impl Ppu {
         let data = match self.addr {
             Self::PATTERNS_ADDR_START..=Self::PATTERNS_ADDR_END => {
                 let delayed_data = self.data_buffer;
-                self.data_buffer = self.pattern_table.as_ref().unwrap()[self.addr as usize];
+
+                // FIXME: Is this really ok ? It provides the uncompressed data (i.e. index in the
+                // palette for the given dot) due to the Index trait, rather than the raw byte data ?
+                let idx = (self.addr as usize & 0x1000) >> 12;
+                self.data_buffer = self.pattern_table.as_ref().unwrap()[idx][self.addr as usize];
 
                 delayed_data
             }
