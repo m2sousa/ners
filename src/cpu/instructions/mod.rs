@@ -14,7 +14,7 @@ pub(crate) struct Instruction {
 }
 
 pub(crate) struct Cycles {
-    pub base: u8,
+    pub base: usize,
     pub page_boundary_penalty: bool,
 }
 
@@ -25,7 +25,7 @@ impl Instruction {
         execute: fn(&mut Cpu, &mut Bus, AddressingMode) -> (),
         mode: AddressingMode,
         length: u8,
-        cycles: u8,
+        cycles: usize,
         page_penalty: bool,
     ) -> Self {
         Self {
@@ -211,7 +211,7 @@ impl Cpu {
 
     /// Execute an instruction.
     /// Returns the number of cycles used by the instruction.
-    pub(super) fn execute_instruction(&mut self, bus: &mut Bus, inst: &Instruction) -> u8 {
+    pub(super) fn execute_instruction(&mut self, bus: &mut Bus, inst: &Instruction) -> usize {
         (inst.execute)(self, bus, inst.mode);
 
         let mut cycles = inst.cycles.base;

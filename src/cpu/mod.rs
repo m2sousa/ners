@@ -1,4 +1,5 @@
 mod instructions;
+mod interrupts;
 mod registers;
 
 use instructions::Instruction;
@@ -14,8 +15,6 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    const RESET_VECTOR: u16 = 0xfffc;
-
     pub fn new() -> Self {
         let reg = Registers::init();
         let opcode_table = Self::build_opcode_table();
@@ -26,19 +25,28 @@ impl Cpu {
         }
     }
 
-    // TODO: Some work must be done there in the reset methods, notably assigning the stack pointer
-    // and some flags...
-    pub fn reset(&mut self, bus: &mut Bus) {
-        let lo = self.mem_read(bus, Self::RESET_VECTOR) as u16;
-        let hi = self.mem_read(bus, Self::RESET_VECTOR + 1) as u16;
+    pub fn step(&mut self, bus: &mut Bus) -> usize {
+        let op = bus.read(self.reg.pc);
 
-        self.reg.pc = (hi << 8) | lo;
-        println!("[DBG] Program counter set to 0x{:4X}.", self.reg.pc);
+        let cycles_used = match self.opcode_table[op as usize] {
+            Some(inst) => self.execute_instruction(bus, inst),
+            None => todo!(
+                "[ERR] Instruction (opcode={}) not found, error handling must be implemented.",
+                op
+            ),
+        };
+
+        cycles_used
     }
 
     pub fn run(&mut self, bus: &mut Bus) {
         self.is_running = true;
         while self.is_running {
+            println!(
+                "[LOG] PC:{:04X} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+                self.reg.pc, self.reg.acc, self.reg.x, self.reg.y, self.reg.status, self.reg.sp
+            );
+
             let op = bus.read(self.reg.pc);
 
             let cycles_used = match self.opcode_table[op as usize] {

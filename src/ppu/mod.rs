@@ -4,7 +4,10 @@ mod pattern;
 
 use crate::loader::RomLoader;
 
+use mmio::PpuStatus;
 use pattern::PatternTables;
+
+pub enum NametableMirroring {}
 
 pub struct Ppu {
     reg: mmio::Registers,
@@ -21,6 +24,11 @@ pub struct Ppu {
     data_buffer: u8,
     addr: u16,
     addr_latch: bool,
+
+    current_scanline: usize,
+    current_dot: usize,
+
+    nmi_pending: bool,
 }
 
 impl Ppu {
@@ -34,7 +42,7 @@ impl Ppu {
     const OAM_MEM_SIZE: usize = 256;
 
     /// The Ppu has 4 palettes for the background, and 4 palettes for the foreground.
-    /// Thus, totaling to 8 palettes in total of 4 bytes (colors).
+    /// Thus, totaling to 8 palettes of 4 bytes (colors), 32 bytes of memory in total.
     const PALETTES_SIZE: usize = 32;
     const PALETTE_ADDR_START: u16 = 0x3f00;
     const PALETTE_ADDR_END: u16 = 0x3fff;
@@ -59,6 +67,11 @@ impl Ppu {
             data_buffer: 0x00,
             addr: 0x0000,
             addr_latch: false,
+
+            current_scanline: 0,
+            current_dot: 0,
+
+            nmi_pending: false,
         }
     }
 
@@ -107,6 +120,32 @@ impl Ppu {
         }
 
         self.reg.write(reg, data);
+    }
+
+    pub fn step(&mut self, cycles: usize) {
+        const MAX_DOTS: usize = 341;
+        const MAX_SCANLINE: usize = 262;
+        const VBLANK_SCANLINE: usize = 241;
+
+        self.current_dot += cycles;
+        if self.current_dot >= MAX_DOTS {
+            self.current_dot -= MAX_DOTS;
+            self.current_scanline += 1;
+
+            if self.current_scanline == VBLANK_SCANLINE {
+                self.reg.set_status(PpuStatus::VBLANK_FLAG);
+                self.nmi_pending = true;
+            }
+
+            if self.current_scanline >= MAX_SCANLINE {
+                self.reg.unset_status(PpuStatus::VBLANK_FLAG);
+                self.current_scanline = 0;
+            }
+        }
+    }
+
+    pub fn poll_nmi(&mut self) -> bool {
+        std::mem::replace(&mut self.nmi_pending, false)
     }
 
     fn mem_read(&mut self) -> u8 {

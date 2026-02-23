@@ -26,6 +26,14 @@ impl Ners {
         self.cpu.reset(&mut self.bus);
     }
 
+    pub fn step(&mut self) {
+        let cpu_cycles = self.cpu.step(&mut self.bus);
+        self.bus.ppu_step(cpu_cycles);
+        if self.bus.ppu_poll_nmi() {
+            self.cpu.non_maskable_interrupt(&mut self.bus);
+        }
+    }
+
     pub fn run(&mut self) {
         self.cpu.run(&mut self.bus);
     }

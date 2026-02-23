@@ -44,7 +44,7 @@ impl Bus {
                 self.ppu.read_register(register)
             }
             Self::ROM_START..=Self::ROM_END => self.rom[self.apply_mirroring(addr)],
-            _ => unimplemented!("cannot read memory space at 0x{:4X}", addr),
+            _ => 0, //unimplemented!("cannot read memory space at 0x{:4X}", addr),
         }
     }
 
@@ -93,5 +93,15 @@ impl Bus {
         }
 
         addr as usize
+    }
+
+    pub fn ppu_step(&mut self, cpu_cycles: usize) {
+        // TODO: This should work for NTSC NES, what about PAL NES which are not clocked at the
+        // same frequency ?
+        self.ppu.step(cpu_cycles * 3);
+    }
+
+    pub fn ppu_poll_nmi(&mut self) -> bool {
+        self.ppu.poll_nmi()
     }
 }

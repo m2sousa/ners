@@ -44,6 +44,8 @@ pub(super) const PPUADDR: usize = 0x2006;
 pub(super) const PPUDATA: usize = 0x2007;
 pub(super) const OAMDMA: usize = 0x4014;
 
+type FlagPosition = u8;
+
 #[derive(Default)]
 pub(super) struct Registers {
     ctrl: u8,
@@ -71,8 +73,7 @@ impl Registers {
             PPUMASK => self.mask,
             PPUSTATUS => {
                 let current_status = self.status;
-                // FIXME: Unset the VBLANK_FLAG on reads...
-                // self.status &= !PpuStatus::VBLANK_FLAG;
+                self.unset_status(PpuStatus::VBLANK_FLAG);
                 current_status
             }
             OAMADDR => self.oamaddr,
@@ -106,5 +107,13 @@ impl Registers {
         } else {
             1
         }
+    }
+
+    pub(super) fn set_status(&mut self, flag: FlagPosition) {
+        self.status |= flag;
+    }
+
+    pub(super) fn unset_status(&mut self, flag: FlagPosition) {
+        self.status &= !flag;
     }
 }
