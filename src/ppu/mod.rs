@@ -105,11 +105,12 @@ impl Ppu {
                 let data = data as u16;
 
                 if !self.addr_latch {
-                    self.addr = (self.addr & 0x00ff) | data << 8;
+                    self.addr = (self.addr & 0x00FF) | (data << 8);
                 } else {
-                    self.addr |= data;
+                    self.addr = (self.addr & 0xFF00) | data;
                 }
 
+                self.addr &= 0x3FFF;
                 self.addr_latch = !self.addr_latch;
             }
             mmio::PPUDATA => {
@@ -201,6 +202,7 @@ impl Ppu {
             Self::PALETTE_ADDR_START..=Self::PALETTE_ADDR_END => {
                 let addr = (self.addr - Self::PALETTE_ADDR_START) as usize;
                 self.palettes[addr] = data;
+                println!("palette write {data} at {addr}");
             }
             _ => unimplemented!(
                 "[ERR] Invalid PPU memory access to write : 0x{:4x}",
@@ -209,5 +211,16 @@ impl Ppu {
         }
 
         self.addr += self.reg.get_addr_increment();
+    }
+
+    pub(super) fn get_decoded_pattern_table(&self) -> (&[u8], &[u8]) {
+        self.pattern_table
+            .as_ref()
+            .unwrap() // This unwrap should not panic in any case.
+            .get_decoded_pattern_table()
+    }
+
+    pub(super) fn get_palettes(&self) -> &[u8] {
+        &self.palettes
     }
 }

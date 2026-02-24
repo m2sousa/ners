@@ -37,4 +37,12 @@ impl Ners {
     pub fn run(&mut self) {
         self.cpu.run(&mut self.bus);
     }
+
+    pub fn get_decoded_pattern_table(&self) -> (&[u8], &[u8]) {
+        self.bus.ppu_get_decoded_pattern_table()
+    }
+
+    pub fn get_palettes(&self) -> &[u8] {
+        self.bus.ppu_get_palettes()
+    }
 }

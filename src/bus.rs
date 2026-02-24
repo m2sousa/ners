@@ -104,4 +104,12 @@ impl Bus {
     pub fn ppu_poll_nmi(&mut self) -> bool {
         self.ppu.poll_nmi()
     }
+
+    pub fn ppu_get_decoded_pattern_table(&self) -> (&[u8], &[u8]) {
+        self.ppu.get_decoded_pattern_table()
+    }
+
+    pub fn ppu_get_palettes(&self) -> &[u8] {
+        self.ppu.get_palettes()
+    }
 }

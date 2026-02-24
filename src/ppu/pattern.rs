@@ -17,6 +17,10 @@ impl PatternTables {
         }
     }
 
+    pub(super) fn get_decoded_pattern_table(&self) -> (&[u8], &[u8]) {
+        (&self.left_table, &self.right_table)
+    }
+
     fn get_table_from_data(data: &[u8]) -> [u8; 16384] {
         let mut pattern_table: [u8; 16384] = [0; 16384];
 
