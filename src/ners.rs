@@ -2,6 +2,11 @@ use std::path::Path;
 
 use crate::{bus::Bus, cpu::Cpu, loader::RomLoader};
 
+pub enum StepStatus {
+    None,
+    FrameReady,
+}
+
 pub struct Ners {
     cpu: Cpu,
     bus: Bus,
@@ -26,12 +31,14 @@ impl Ners {
         self.cpu.reset(&mut self.bus);
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> StepStatus {
         let cpu_cycles = self.cpu.step(&mut self.bus);
         self.bus.ppu_step(cpu_cycles);
         if self.bus.ppu_poll_nmi() {
             self.cpu.non_maskable_interrupt(&mut self.bus);
+            return StepStatus::FrameReady;
         }
+        StepStatus::None
     }
 
     pub fn run(&mut self) {

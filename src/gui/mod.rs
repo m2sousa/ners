@@ -6,7 +6,7 @@ use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window, EventPump, Sdl,
 };
 
-use super::ners::Ners;
+use super::ners::{Ners, StepStatus};
 
 use std::path::Path;
 
@@ -92,13 +92,16 @@ impl NersGui {
         let mut event_pump = self.ctx.event_pump().unwrap();
 
         while self.state == AppState::Running {
-            self.handle_events(&mut event_pump);
-            self.core.step();
-            self.render(&mut canvas);
+            self.handle_events(&mut event_pump, &mut canvas);
+            let step_status = self.core.step();
+            if matches!(step_status, StepStatus::FrameReady) {
+                self.render(&mut canvas);
+                std::thread::sleep(std::time::Duration::from_millis(16));
+            }
         }
     }
 
-    fn handle_events(&mut self, event_pump: &mut EventPump) {
+    fn handle_events(&mut self, event_pump: &mut EventPump, canvas: &mut Canvas<Window>) {
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -113,7 +116,7 @@ impl NersGui {
                     ..
                 } => {
                     self.current_palette_idx = (self.current_palette_idx + 1) % 8;
-                    println!("Current palette idx : {}.", self.current_palette_idx)
+                    self.render(canvas);
                 }
                 _ => {}
             }

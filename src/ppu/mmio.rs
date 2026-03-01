@@ -109,6 +109,10 @@ impl Registers {
         }
     }
 
+    pub(super) fn is_nmi_enabled(&self) -> bool {
+        self.ctrl & PpuCtrl::VBLANK_NMI_ENABLE != 0
+    }
+
     pub(super) fn set_status(&mut self, flag: FlagPosition) {
         self.status |= flag;
     }

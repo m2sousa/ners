@@ -135,7 +135,9 @@ impl Ppu {
 
             if self.current_scanline == VBLANK_SCANLINE {
                 self.reg.set_status(PpuStatus::VBLANK_FLAG);
-                self.nmi_pending = true;
+                if self.reg.is_nmi_enabled() {
+                    self.nmi_pending = true;
+                }
             }
 
             if self.current_scanline >= MAX_SCANLINE {
@@ -202,7 +204,6 @@ impl Ppu {
             Self::PALETTE_ADDR_START..=Self::PALETTE_ADDR_END => {
                 let addr = (self.addr - Self::PALETTE_ADDR_START) as usize;
                 self.palettes[addr] = data;
-                println!("palette write {data} at {addr}");
             }
             _ => unimplemented!(
                 "[ERR] Invalid PPU memory access to write : 0x{:4x}",

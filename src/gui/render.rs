@@ -25,7 +25,8 @@ impl NersGui {
                 let pixel_x = pixel_idx % TILE_SIZE;
                 let pixel_y = pixel_idx / TILE_SIZE;
 
-                let color = colors::get_rgb_from_idx(pattern_table[tile_idx * 64 + pixel_idx]);
+                let color_idx = pattern_table[tile_idx * 64 + pixel_idx] as usize;
+                let color = colors::get_rgb_from_idx(palette_data[color_idx]);
 
                 canvas.set_draw_color(color);
 
