@@ -6,6 +6,8 @@ use std::path::Path;
 pub use errors::LoaderError;
 use ines::INesLoader;
 
+use crate::ppu::NametableArrangement;
+
 pub trait Loader {
     const FILE_SIGNATURE: &'static [u8];
 
@@ -19,9 +21,9 @@ pub trait Loader {
 
     fn get_prg_rom(&self) -> &[u8];
     fn get_chr_rom(&self) -> &[u8];
+    fn get_nametable_arrangement(&self) -> NametableArrangement;
 }
 
-#[derive(Debug)]
 pub enum RomLoader {
     INes(INesLoader),
 }
@@ -53,5 +55,13 @@ impl RomLoader {
         }
         .get_chr_rom()
         .to_vec()
+    }
+
+    pub fn get_nametable_arrangement(&self) -> NametableArrangement {
+        match self {
+            RomLoader::INes(loader) => loader,
+            _ => unreachable!(),
+        }
+        .get_nametable_arrangement()
     }
 }

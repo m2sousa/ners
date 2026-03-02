@@ -1,12 +1,14 @@
-use super::Loader;
-use super::LoaderError;
+use crate::ppu::NametableArrangement;
 
-#[derive(Debug)]
+use super::{Loader, LoaderError};
+
 pub struct INesLoader {
     data: Vec<u8>,
     prg_size: usize,
     chr_size: usize,
     prg_offset: usize,
+
+    nametable_arrangement: NametableArrangement,
 }
 
 impl INesLoader {
@@ -14,6 +16,7 @@ impl INesLoader {
 
     const PRG_SIZE_OFFSET: usize = 4;
     const CHR_SIZE_OFFSET: usize = 5;
+
     const FLAG6_OFFSET: usize = 6;
 }
 
@@ -39,6 +42,12 @@ impl Loader for INesLoader {
 
         let is_trainer_present = (flag6 & Flag6Masks::TRAINER) != 0;
 
+        let nametable_arrangement = match flag6 & Flag6Masks::NAMETABLE_ARRANGEMENT {
+            0 => NametableArrangement::Vertical,
+            1 => NametableArrangement::Horizontal,
+            _ => unreachable!(),
+        };
+
         let prg_offset = match !is_trainer_present {
             true => Self::HEADER_SIZE,
             false => Self::HEADER_SIZE + 512,
@@ -46,9 +55,12 @@ impl Loader for INesLoader {
 
         let loader = Self {
             data: buf,
+
             prg_size,
             chr_size,
             prg_offset,
+
+            nametable_arrangement,
         };
 
         Ok(loader)
@@ -61,6 +73,10 @@ impl Loader for INesLoader {
     fn get_chr_rom(&self) -> &[u8] {
         let chr_offset = self.prg_offset + self.prg_size;
         &self.data[chr_offset..chr_offset + self.chr_size]
+    }
+
+    fn get_nametable_arrangement(&self) -> NametableArrangement {
+        self.nametable_arrangement
     }
 }
 

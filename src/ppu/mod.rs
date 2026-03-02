@@ -7,7 +7,11 @@ use crate::loader::RomLoader;
 use mmio::PpuStatus;
 use pattern::PatternTables;
 
-pub enum NametableMirroring {}
+#[derive(Copy, Clone)]
+pub enum NametableArrangement {
+    Vertical,
+    Horizontal,
+}
 
 pub struct Ppu {
     reg: mmio::Registers,
@@ -18,12 +22,13 @@ pub struct Ppu {
     vram: [u8; Ppu::PPU_RAM_SIZE],
     palettes: [u8; Ppu::PALETTES_SIZE],
     object_attribute_mem: [u8; Ppu::OAM_MEM_SIZE],
-
     pattern_table: Option<PatternTables>,
+
+    nametable_arrangement: Option<NametableArrangement>,
 
     data_buffer: u8,
     addr: u16,
-    addr_latch: bool,
+    addr_latch: bool, // w register
 
     current_scanline: usize,
     current_dot: usize,
@@ -64,6 +69,8 @@ impl Ppu {
             object_attribute_mem,
             pattern_table: None,
 
+            nametable_arrangement: None,
+
             data_buffer: 0x00,
             addr: 0x0000,
             addr_latch: false,
@@ -75,6 +82,7 @@ impl Ppu {
         }
     }
 
+    // FIXME: I should probably change the name of this api function...
     pub fn load_chr_data(&mut self, loader: &RomLoader) {
         let data = &loader.get_chr_rom();
         self.pattern_table = Some(PatternTables::new(data));
@@ -82,6 +90,9 @@ impl Ppu {
             "[DBG] Loaded {} bytes of data in the pattern table.",
             data.len()
         );
+
+        let nametable_arrangement = loader.get_nametable_arrangement();
+        self.nametable_arrangement = Some(nametable_arrangement);
     }
 
     pub fn read_register(&mut self, reg: usize) -> u8 {
