@@ -177,7 +177,7 @@ impl Ppu {
             Self::RAM_ADDR_START..=Self::RAM_ADDR_END => {
                 let delayed_data = self.data_buffer;
 
-                let addr = (self.addr - Self::RAM_ADDR_START) as usize;
+                let addr = self.get_mirrored_vram_addr();
                 self.data_buffer = self.vram[addr];
 
                 delayed_data
@@ -207,9 +207,7 @@ impl Ppu {
                 panic!("FIXME: write to pattern tables ?");
             }
             Self::RAM_ADDR_START..=Self::RAM_ADDR_END => {
-                let mut addr = (self.addr - Self::RAM_ADDR_START) as usize;
-                // TODO: mirroring with cartridge information must be done here...
-                addr %= Self::PPU_RAM_SIZE;
+                let addr = self.get_mirrored_vram_addr();
                 self.vram[addr] = data;
             }
             Self::PALETTE_ADDR_START..=Self::PALETTE_ADDR_END => {
@@ -223,6 +221,14 @@ impl Ppu {
         }
 
         self.addr += self.reg.get_addr_increment();
+    }
+
+    fn get_mirrored_vram_addr(&self) -> usize {
+        let addr = (self.addr - Self::RAM_ADDR_START) as usize;
+        match self.nametable_arrangement.unwrap() {
+            NametableArrangement::Vertical => addr % 0x800,
+            NametableArrangement::Horizontal => (addr % 0x400) | ((addr / 0x800) * 0x400),
+        }
     }
 
     pub(super) fn get_decoded_pattern_table(&self) -> (&[u8], &[u8]) {
